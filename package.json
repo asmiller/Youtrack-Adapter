@@ -23,7 +23,7 @@
   "homepage": "https://github.com/asmiller/rollbar_youtrack#readme",
   "dependencies": {
     "express": "^4.13.3",
-    "mongodb": "^2.0.42",
+    "monk": "^1.0.1",
     "q": "^1.4.1",
     "restler": "^3.3.0",
     "xml2js": "^0.4.10"

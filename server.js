@@ -2,7 +2,6 @@ var express = require('express');
 var app = express();
 var config = require('./config.json');
 var restler = require('restler');
-
 var youtrack = require('./youtrack');
 
 
