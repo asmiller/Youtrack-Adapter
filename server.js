@@ -3,36 +3,64 @@ var app = express();
 var config = require('./config.json');
 var restler = require('restler');
 var youtrack = require('./youtrack');
+var fs = require('fs');
+
+var bodyParser = require('body-parser');
 
 
-//Create an issue in YouTrack from a Rollbar exception
-app.post('youtrack/issues', function (req, res) {
-    var event = req.body,
-        item = event.data.item;
+var services = {};
 
-    //We aren't handling the 'deploy' events from rollbar
-    if (item) {
-        switch (event.event_name) {
-            case 'new_item':
-                youtrack.create(item);
-                break;
-            case 'reactivated_item':
-                youtrack.update(item.id, {});
-                break;
-            case 'resolved_item':
 
-                break;
-            case 'reopened_item':
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
 
-                break;
+//Load services
+fs.readdirSync(__dirname + '/services').forEach(function (file) {
+    if (file.indexOf('.js')) {
+        var serviceName = file.split('.')[0];
+        if (config.services[serviceName].enabled) {
+            services[serviceName] = require(__dirname + '/services/' + file);
+
+            app.use('/' + serviceName, services[serviceName]);
+            console.log('Listening for ' + serviceName);
         }
     }
-
-    res.send(200);
 });
 
-app.put('rollbar/issues', function (req, res) {
-    res.send('Hello World!');
+app.get('', function (req, res) {
+    res.send('Post to /issues');
+});
+
+function create(obj) {
+    var key = {
+        issueId: obj.issueId,
+        project: obj.project,
+        source: 'local'
+    };
+
+    var data = {
+        description: obj.description,
+        summary: obj.summary
+    };
+
+    console.dir(key);
+    console.dir(data);
+
+    youtrack.create(key, data);
+}
+
+app.post('/issues', function (req, res) {
+    if ((req.form || {}).issueId) {
+        create(req.form);
+    } else if ((req.body || {}).issueId) {
+        create(req.body);
+    } else if ((req.query || {}).issueId) {
+        create(req.query);
+    } else {
+        return res.sendStatus(400);
+    }
+
+    res.sendStatus(200);
 });
 
 ////Load existing YouTrack issues, so we can link them to Rollbar.

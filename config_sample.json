@@ -1,0 +1,24 @@
+{
+  "youtrack": {
+    "url": "https://MY_COMPANY.myjetbrains.com/youtrack",
+    "user": "YOUTRACK_LOGIN",
+    "pass": "YOUTRACK_PASS"
+  },
+  "db": {
+    "url": "mongodb://localhost:27017/youtrack",
+    "options": {
+      "username": "",
+      "password": ""
+    }
+  },
+  "services": {
+    "rollbar": {
+      "enabled": true,
+      "url": "https://rollbar.com/MY_COMPANY",
+      "access_token": "ACCESS_TOKEN",
+      "projects": {
+        "ROLLBAR_PROJECT_NAME": "YOUTRACK_PROJECT_ID"
+      }
+    }
+  }
+}

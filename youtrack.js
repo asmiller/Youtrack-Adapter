@@ -2,27 +2,25 @@ var restler = require('restler');
 var config = require('./config.json');
 var xml2json = require('xml2js').parseString;
 var q = require('Q');
-var db = require('monk')(config.db.url, config.db.options);
-var issues = db.get('issues');
-var token;
+var issues = require('./issues');
+var auth;
 
 var youtrack = {};
 
-//set up Mongo indices
-issues.index('issueId source project');
 
 //Log in to YouTrack
 restler.post(config.youtrack.url + '/rest/user/login', {
     data: {
-        login: config.youtrack.username,
-        password: config.youtrack.password
+        login: config.youtrack.user,
+        password: config.youtrack.pass
     }
 }).on('complete', function (data, respObj) {
-    if (data instanceof Error || !respObj.headers['Set-Cookie']) {
+    if (data instanceof Error || !respObj.headers['set-cookie']) {
         console.error('Error logging in to YouTrack');
         console.dir(data);
     } else {
-        console.dir(respObj.headers);
+        console.log('Logged in to YouTrack with username ' + config.youtrack.user);
+        auth = respObj.headers['set-cookie'].join(';');
     }
 });
 
@@ -30,26 +28,35 @@ restler.post(config.youtrack.url + '/rest/user/login', {
 /**
  * Create a new issue in YouTrack. The data parameter must follow the following protocol:
  *
- * issueId (required): the id from the source reporter
- * project (required): the youTrack project
- * source (required): the name of the source reporter
- * summary (required): Short summary of the issue
- * description: description of the issue, with a link back to the original report
- * attachments: include a list of multipart/form-data files to send
- * permittedGroup: sets the permissions in YouTrack for the issue
+ * @param {object} key - Config option for the issue to update
+ * @param {String} key.issueId - ID of this issue from the original source
+ * @param {String} key.source - Source that originally created the issue
+ * @param {String} key.project - YouTrack project that contains this issue
+ *
+ * @param {Object} data - Data for the issue
+ * @param {String} data.summary - Short summary (title) of the issue
+ * @param {String} data.description - Description of the issue
+ * @param {String} data.permittedGroup - optional group for Youtrack visibility
  */
-youtrack.create = function (data) {
+youtrack.create = function (key, data) {
+    console.log(config.youtrack.url);
+
+    data.project = key.project;
+
     restler.put(config.youtrack.url + '/rest/issue', {
-        params: data
+        query: data,
+        headers: {Cookie: auth}
     }).on('complete', function (result, resp) {
-        if (result instanceof Error) {
+
+        if (result instanceof Error || result.error) {
             console.error('Error creating issue in YouTrack');
             console.dir(result);
         } else {
-            console.log('Created youtrack issue');
-            console.dir(result);
-            issues.insert(data, function (err, result) {
-                console.log('Added ' + data.issueId + ' from ' + data.source + ' to mongo');
+            key.youtrackId = resp.headers.location.split('/').pop();
+            console.log('Created youtrack issue ' + key.youtrackId);
+
+            issues.insert(key, function (err, result) {
+                console.log('Added ' + key.issueId + ' from ' + key.source + ' to mongo');
             });
         }
     })
@@ -58,15 +65,15 @@ youtrack.create = function (data) {
 
 /**
  * Update an issue from a remote source in Youtrack
- * @param {object} issue - Config option for the issue to update
- * @param {object} issue.issueId - ID of this issue from the original source
- * @param {object} issue.source - Source that originally created the issue
- * @param {object} issue.project - YouTrack project that contains this issue
+ * @param {object} key - Config option for the issue to update
+ * @param {String} key.issueId - ID of this issue from the original source
+ * @param {String} key.source - Source that originally created the issue
+ * @param {String} key.project - YouTrack project that contains this issue
  *
- * @param {string} command - YouTrack command to run on this issue.
+ * @param {string|Object} command - YouTrack command to run on this issue. If string, run the command. If object, update each field to corresponding value.
  */
-youtrack.update = function (issue, command) {
-    issues.findOne(issue, function (err, dbIssue) {
+youtrack.update = function (key, command) {
+    issues.findOne(key, function (err, dbIssue) {
         if (err || !dbIssue) {
             console.error('Unable to find YouTrack issue to update');
             console.dir(dbIssue);
@@ -74,8 +81,21 @@ youtrack.update = function (issue, command) {
                 console.dir(err);
             }
         } else {
+
+            var cmd = '';
+            if (command instanceof Object) {
+                Object.keys(command).forEach(function (prop) {
+                    cmd += prop + ' ' + command[prop] + ' ';
+                });
+            } else {
+                cmd = command;
+            }
+
+            console.log('Running "' + cmd + ' on ' + dbIssue.youtrackId);
+
             restler.post(config.youtrack.url + '/rest/issue/' + dbIssue.youtrackId + '/execute', {
-                data: {command: command}
+                data: {command: cmd},
+                headers: {Cookie: auth}
             }).on('complete', function (result) {
                 if (result instanceof Error) {
                     console.error('Error updating issue in YouTrack');

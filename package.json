@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/asmiller/rollbar_youtrack#readme",
   "dependencies": {
+    "body-parser": "^1.13.3",
     "express": "^4.13.3",
     "monk": "^1.0.1",
     "q": "^1.4.1",
