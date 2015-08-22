@@ -73,6 +73,9 @@ router.post('', function (req, res) {
                 youtrack.update(itemKey, {state: 'Open', '&comment': 'Reopened by Rollbar'});
                 break;
         }
+    } else {
+        console.log('Received unknown hook from Rollbar');
+        console.dir(req.body);
     }
 
     res.sendStatus(200);
