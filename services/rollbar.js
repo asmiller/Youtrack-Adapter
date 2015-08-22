@@ -33,7 +33,7 @@ restler.get('https://api.rollbar.com/api/1/projects', auth).on('complete', funct
 
 
 //Create an issue in YouTrack from a Rollbar exception
-router.post('/issues', function (req, res) {
+router.post('', function (req, res) {
     var event = req.body,
         item = event.data.item;
 
@@ -75,7 +75,7 @@ router.post('/issues', function (req, res) {
         }
     }
 
-    res.send(200);
+    res.sendStatus(200);
 });
 
 module.exports = router;

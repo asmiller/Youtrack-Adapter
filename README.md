@@ -7,7 +7,7 @@ Since the YouTrack api makes it difficult to search for issues after they have b
 
 The code is written modularly, so it shouldn't be hard to add additional reporting services as desired.
 
-##Instructions
+##Installation
 ```
 git clone https://github.com/asmiller/Youtrack-Adapter.git
 cd Youtrack-Adapter
@@ -21,3 +21,8 @@ To run the server, just call
 ```
 node server.js
 ```
+
+##Setting up services
+
+###Rollbar
+Go into your Rollbar project settings and enable a Webhook notification. Set the url to point at your server, with a path of /rollbar (eg, https://bugs.myserver.com/rollbar)
