@@ -1,8 +1,8 @@
 # Youtrack API Adapter
-Helps automate Youtrack issue adding/editing from outside webhooks
+This small node.js server automates Youtrack issue management from outside webhooks.
 
-This small node.js server listens for webhooks from an issue reporter (Rollbar, Raygun, form on your website, etc) and creates or updates Youtrack on changes.
-
-It is made to modular, so that you can add additional services as desired.
+The server listens for webhook request from an issue reporter (Rollbar, Raygun, form on your website, etc) and creates or updates Youtrack issues appropriately. I like the simplicity of Youtrack, but their API did not directly work with webhooks from other services.
 
 Since the YouTrack api makes it difficult to search for issues after they have been created, a local Mongo database is used to keep track of the Youtrack issue associated with each webhook request.
+
+The code is written modularly, so it shouldn't be hard to add additional reporting services as desired.
