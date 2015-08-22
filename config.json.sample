@@ -1,4 +1,5 @@
 {
+  "port":3000,
   "youtrack": {
     "url": "https://MY_COMPANY.myjetbrains.com/youtrack",
     "user": "YOUTRACK_LOGIN",
