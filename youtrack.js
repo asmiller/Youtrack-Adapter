@@ -1,7 +1,5 @@
 var restler = require('restler');
 var config = require('./config.json');
-var xml2json = require('xml2js').parseString;
-var q = require('Q');
 var issues = require('./issues');
 var auth;
 
