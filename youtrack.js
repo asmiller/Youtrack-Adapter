@@ -37,8 +37,6 @@ restler.post(config.youtrack.url + '/rest/user/login', {
  * @param {String} data.permittedGroup - optional group for Youtrack visibility
  */
 youtrack.create = function (key, data) {
-    console.log(config.youtrack.url);
-
     data.project = key.project;
 
     restler.put(config.youtrack.url + '/rest/issue', {

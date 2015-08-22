@@ -42,7 +42,7 @@ router.post('', function (req, res) {
         var project = projects[item.project_id];
 
         var itemKey = {
-            itemId: item.id,
+            issueId: item.id,
             project: project.youtrackProject,
             source: 'rollbar'
         };
