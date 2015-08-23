@@ -15,7 +15,6 @@ restler.get('https://api.rollbar.com/api/1/projects', auth).on('complete', funct
         console.error('Unable to log in to Rollbar to find projects');
         console.dir(data);
     } else {
-
         data.result.forEach(function (project) {
             if (project.name) {
                 projects[project.id] = {
@@ -24,6 +23,19 @@ restler.get('https://api.rollbar.com/api/1/projects', auth).on('complete', funct
                     url: cfg.url + '/' + project.name + '/items',
                     youtrackProject: cfg.projects[project.name] || project.name
                 };
+
+                restler.get('https://api.rollbar.com/api/1/project/' + project.id + '/access_tokens', auth).on('complete', function (data) {
+                    if (data.result) {
+                        data.result.forEach(function (token) {
+                            if (token.scopes.indexOf('read') !== -1 && token.status === 'enabled') {
+                                projects[project.id].readToken = token.access_token;
+                            }
+                            if (token.scopes.indexOf('write') !== -1 && token.status === 'enabled') {
+                                projects[project.id].writeToken = token.access_token;
+                            }
+                        });
+                    }
+                });
             }
         });
 
@@ -58,21 +70,29 @@ router.post('', function (req, res) {
 
         }
 
-        switch (event.event_name) {
-            case 'new_item':
-                youtrack.create(itemKey, itemDesc);
-                break;
-            case 'exp_repeat_item':
-                youtrack.update(itemKey, {'comment': 'Total occurrences: ' + item.total_occurrences});
-                break;
-            case 'resolved_item':
-                youtrack.update(itemKey, {state: 'Fixed'});
-                break;
-            case 'reopened_item':
-            case 'reactivated_item':
-                youtrack.update(itemKey, {state: 'Open', '&comment': 'Reopened by Rollbar'});
-                break;
-        }
+        youtrack.exists(itemKey, function (exists) {
+            if (!exists) {
+                event.event_name = 'new_item';
+            } else if (event.event_name === 'new_item') {
+                event.event_name = 'exp_repeat_item';
+            }
+
+            switch (event.event_name) {
+                case 'new_item':
+                    youtrack.create(itemKey, itemDesc);
+                    break;
+                case 'exp_repeat_item':
+                    youtrack.update(itemKey, {'comment': 'Total occurrences: ' + item.total_occurrences});
+                    break;
+                case 'resolved_item':
+                    youtrack.update(itemKey, {state: 'Fixed'});
+                    break;
+                case 'reopened_item':
+                case 'reactivated_item':
+                    youtrack.update(itemKey, {state: 'Open', '&comment': 'Reopened by Rollbar'});
+                    break;
+            }
+        });
     } else {
         console.log('Received unknown hook from Rollbar');
         console.dir(req.body);

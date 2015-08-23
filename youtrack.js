@@ -58,6 +58,11 @@ youtrack.create = function (key, data) {
     })
 };
 
+youtrack.exists = function (key, callback) {
+    issues.findOne(key, function (err, dbIssue) {
+        callback(!!dbIssue);
+    });
+};
 
 /**
  * Update an issue from a remote source in Youtrack
