@@ -49,7 +49,7 @@ router.post('', function (req, res) {
 
         var itemDesc = {
             summary: item.title,
-            description: 'Reporter: Rollbar (' + project.url + '/' + item.id + ')\n'
+            description: 'Reporter: Rollbar (' + project.url + '/' + item.counter + ')\n'
         };
 
         try {
